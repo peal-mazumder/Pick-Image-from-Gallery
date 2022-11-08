@@ -1,5 +1,6 @@
 package com.example.pickimagesfromgallery
 
+import android.graphics.Bitmap
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -8,10 +9,10 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pickimagesfromgallery.databinding.ImageViewBinding
 
-class ImageAdapter : ListAdapter<Uri, ImageAdapter.ImageViewHolder>(DiffCallback) {
+class ImageAdapter : ListAdapter<Bitmap, ImageAdapter.ImageViewHolder>(DiffCallback) {
     class ImageViewHolder(var binding: ImageViewBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(data: Uri) {
-            binding.ivImage.setImageURI(data)
+        fun bind(data: Bitmap) {
+            binding.ivImage.setImageBitmap(data)
         }
     }
 
@@ -25,13 +26,13 @@ class ImageAdapter : ListAdapter<Uri, ImageAdapter.ImageViewHolder>(DiffCallback
         return holder.bind((data))
     }
 
-    companion object DiffCallback : DiffUtil.ItemCallback<Uri>() {
-        override fun areItemsTheSame(oldItem: Uri, newItem: Uri): Boolean {
-            return oldItem == newItem
+    companion object DiffCallback : DiffUtil.ItemCallback<Bitmap>() {
+        override fun areItemsTheSame(oldItem: Bitmap, newItem: Bitmap): Boolean {
+            return (oldItem.sameAs(newItem))
         }
 
-        override fun areContentsTheSame(oldItem: Uri, newItem: Uri): Boolean {
-            return (oldItem == newItem)
+        override fun areContentsTheSame(oldItem: Bitmap, newItem: Bitmap): Boolean {
+            return (oldItem.sameAs(newItem))
         }
     }
 }
