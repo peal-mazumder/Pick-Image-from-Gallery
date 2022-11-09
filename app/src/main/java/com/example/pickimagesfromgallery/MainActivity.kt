@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     private val getImageFromCamera =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            val bitmap = it.data?.extras!!.get("data") as Bitmap
+            val bitmap = it.data?.extras?.get("data") as Bitmap
             viewModel.images.add(bitmap)
             adapter.submitList(viewModel.images)
             adapter.notifyItemInserted(viewModel.images.size - 1)
