@@ -1,5 +1,6 @@
 package com.example.pickimagesfromgallery
 
+import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -22,7 +23,12 @@ class ImageAdapter : ListAdapter<Uri, ImageAdapter.ImageViewHolder>(DiffCallback
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
         val image = getItem(position)
-        return holder.bind((image))
+        holder.binding.ivImage.setOnClickListener {
+            val intent = Intent(holder.binding.root.context, FullScreenActivity::class.java)
+            intent.putExtra("path", image.toString())
+            holder.binding.root.context.startActivity(intent)
+        }
+        holder.bind((image))
     }
 
     companion object DiffCallback : DiffUtil.ItemCallback<Uri>() {
