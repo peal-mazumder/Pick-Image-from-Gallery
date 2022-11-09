@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.widget.Button
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -15,12 +16,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.pickimagesfromgallery.databinding.ActivityMainBinding
+import com.example.pickimagesfromgallery.databinding.FragmentBottomDialogBinding
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private val IMAGE_PICK_CODE = 2
+    private lateinit var bindingBottomSheetDialog: FragmentBottomDialogBinding
+    private lateinit var dialog: BottomSheetDialog
+
     private val REQUEST_CODE = 1
+    private val IMAGE_PICK_CODE = 2
     private val CAMERA_REQUEST_CODE = 3
 
     private val viewModel: MainViewModel by viewModels()
@@ -35,24 +41,32 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerViewGalleryImage.adapter = adapter
 
         binding.btnAddPhotos.setOnClickListener {
-            showPictureDialog()
+            showBottomSheetDialog()
         }
 
     }
 
-    private fun showPictureDialog() {
-        val pictureDialog = AlertDialog.Builder(this)
-        pictureDialog.setTitle("Select Action")
-        val pictureDialogItems = arrayOf("Select photo from Gallery", "Capture photo from Camera")
-        pictureDialog.setItems(
-            pictureDialogItems
-        ) { dialog, which ->
-            when (which) {
-                0 -> choosePhotosFromGallery()
-                1 -> takePhotoFromCamera()
-            }
+    private fun showBottomSheetDialog() {
+        dialog = BottomSheetDialog(this)
+        bindingBottomSheetDialog = FragmentBottomDialogBinding.inflate(layoutInflater)
+
+        setClickListener()
+
+        dialog.setCancelable(true)
+        dialog.setContentView(bindingBottomSheetDialog.root)
+        dialog.show()
+    }
+
+    private fun setClickListener() {
+        bindingBottomSheetDialog.tvPhoto.setOnClickListener {
+            takePhotoFromCamera()
+            dialog.dismiss()
         }
-        pictureDialog.show()
+
+        bindingBottomSheetDialog.tvGallery.setOnClickListener {
+            choosePhotosFromGallery()
+            dialog.dismiss()
+        }
     }
 
     private fun takePhotoFromCamera() {
