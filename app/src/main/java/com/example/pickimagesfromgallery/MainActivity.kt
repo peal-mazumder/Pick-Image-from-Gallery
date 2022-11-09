@@ -1,17 +1,17 @@
 package com.example.pickimagesfromgallery
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.widget.Button
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -26,8 +26,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dialog: BottomSheetDialog
 
     private val REQUEST_CODE = 1
-    private val IMAGE_PICK_CODE = 2
-    private val CAMERA_REQUEST_CODE = 3
 
     private val viewModel: MainViewModel by viewModels()
 
@@ -43,8 +41,40 @@ class MainActivity : AppCompatActivity() {
         binding.btnAddPhotos.setOnClickListener {
             showBottomSheetDialog()
         }
-
     }
+
+    private val getImageFromCamera =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            val bitmap = it.data?.extras!!.get("data") as Bitmap
+            viewModel.images.add(bitmap)
+            adapter.submitList(viewModel.images)
+            adapter.notifyItemInserted(viewModel.images.size - 1)
+        }
+
+    private val getImageFromGallery =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (it.data?.clipData != null) {
+                val count = it.data?.clipData?.itemCount ?: 0
+                val sizeBeforeItemsInserted = viewModel.images.size
+
+                for (i in 0 until count) {
+                    val imageUri = it.data?.clipData?.getItemAt(i)?.uri ?: Uri.EMPTY
+                    val bitmap = when {
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.P -> {
+                            val source = ImageDecoder.createSource(this.contentResolver, imageUri)
+                            ImageDecoder.decodeBitmap(source)
+                        }
+                        else -> {
+                            MediaStore.Images.Media.getBitmap(this.contentResolver, imageUri)
+                        }
+                    }
+                    viewModel.images.add(bitmap)
+                }
+                adapter.submitList(viewModel.images)
+                adapter.notifyItemRangeChanged(sizeBeforeItemsInserted - 1, count)
+            }
+        }
+
 
     private fun showBottomSheetDialog() {
         dialog = BottomSheetDialog(this)
@@ -71,7 +101,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun takePhotoFromCamera() {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        startActivityForResult(intent, CAMERA_REQUEST_CODE)
+        getImageFromCamera.launch(intent)
     }
 
     private fun choosePhotosFromGallery() {
@@ -79,38 +109,7 @@ class MainActivity : AppCompatActivity() {
         intent.type = "image/*"
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         intent.action = Intent.ACTION_PICK
-        startActivityForResult(intent, IMAGE_PICK_CODE)
-    }
-
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == IMAGE_PICK_CODE) {
-                if (data?.clipData != null) {
-                    val count = data.clipData?.itemCount
-
-                    for (i in 0 until count!!) {
-                        val imageUri: Uri = data.clipData?.getItemAt(i)!!.uri
-                        val bitmap =
-                            MediaStore.Images.Media.getBitmap(this.contentResolver, imageUri)
-                        viewModel.images.add(bitmap)
-                    }
-
-
-                } else if (data?.data != null) {
-                    val imageUri: Uri = data.data!!
-                    val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, imageUri)
-                    viewModel.images.add(bitmap)
-                }
-            } else if (requestCode == CAMERA_REQUEST_CODE) {
-                val bitmap = data!!.extras!!.get("data") as Bitmap
-                viewModel.images.add(bitmap)
-            }
-            adapter.submitList(viewModel.images)
-            adapter.notifyDataSetChanged()
-        }
+        getImageFromGallery.launch(intent)
     }
 
     private fun askForPermission() {
