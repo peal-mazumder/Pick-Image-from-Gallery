@@ -1,6 +1,5 @@
 package com.example.pickimagesfromgallery
 
-import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -9,7 +8,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.pickimagesfromgallery.databinding.ImageViewBinding
 
-class ImageAdapter : ListAdapter<Uri, ImageAdapter.ImageViewHolder>(DiffCallback) {
+
+class ImageAdapter(private val mCallback: Callback? = null) : ListAdapter<Uri, ImageAdapter.ImageViewHolder>(DiffCallback) {
     class ImageViewHolder(var binding: ImageViewBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(image: Uri) {
             binding.ivImage.setImageURI(image)
@@ -23,12 +23,10 @@ class ImageAdapter : ListAdapter<Uri, ImageAdapter.ImageViewHolder>(DiffCallback
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
         val image = getItem(position)
-        holder.binding.ivImage.setOnClickListener {
-            val intent = Intent(holder.binding.root.context, FullScreenActivity::class.java)
-            intent.putExtra("path", image.toString())
-            holder.binding.root.context.startActivity(intent)
-        }
         holder.bind((image))
+        holder.binding.ivImage.setOnClickListener {
+            mCallback?.onImageClicked(image)
+        }
     }
 
     companion object DiffCallback : DiffUtil.ItemCallback<Uri>() {
@@ -39,5 +37,9 @@ class ImageAdapter : ListAdapter<Uri, ImageAdapter.ImageViewHolder>(DiffCallback
         override fun areContentsTheSame(oldItem: Uri, newItem: Uri): Boolean {
             return oldItem == newItem
         }
+    }
+
+    interface Callback {
+        fun onImageClicked(imagePath: Uri)
     }
 }

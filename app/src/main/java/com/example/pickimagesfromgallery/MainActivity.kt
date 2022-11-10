@@ -1,6 +1,7 @@
 package com.example.pickimagesfromgallery
 
 import android.Manifest
+import android.app.Dialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -14,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.example.pickimagesfromgallery.databinding.ActivityFullScreenBinding
 import com.example.pickimagesfromgallery.databinding.ActivityMainBinding
 import com.example.pickimagesfromgallery.databinding.FragmentBottomDialogBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -23,7 +25,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ImageAdapter.Callback {
     private lateinit var binding: ActivityMainBinding
     private lateinit var bindingBottomSheetDialog: FragmentBottomDialogBinding
     private lateinit var dialog: BottomSheetDialog
@@ -35,7 +37,7 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
-    private val adapter = ImageAdapter()
+    private val adapter = ImageAdapter(this)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -179,5 +181,18 @@ class MainActivity : AppCompatActivity() {
             }
             recreate()
         }
+    }
+
+    override fun onImageClicked(imagePath: Uri) {
+        val dialog = Dialog(this)
+        val dialogBinding: ActivityFullScreenBinding =
+            ActivityFullScreenBinding.inflate(layoutInflater)
+        dialog.setContentView(dialogBinding.root)
+        dialog.setCancelable(true)
+        dialogBinding.ivFullScreen.setOnClickListener {
+            dialog.dismiss()
+        }
+        dialogBinding.ivFullScreen.setImageURI(imagePath)
+        dialog.show()
     }
 }
